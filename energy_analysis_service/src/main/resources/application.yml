@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+carbon-intensity:
+  api:
+    base-url: https://api.carbonintensity.org.uk
+
+energy:
+  green-sources:
+    - biomass
+    - nuclear
+    - hydro
+    - wind
+    - solar
