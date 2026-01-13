@@ -1,8 +1,8 @@
 package apec.task.domain.energy_mix;
 
 import apec.task.config.EnergyProperties;
-import apec.task.dto.FuelShare;
-import apec.task.dto.GenerationDataEntry;
+import apec.task.dto.carbon_intensity.FuelShare;
+import apec.task.dto.carbon_intensity.GenerationDataEntry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,10 +19,9 @@ public class EnergyMixCalculatorImpl implements EnergyMixCalculator{
         return data.stream()
                 .mapToDouble(x -> x.generationmix()
                         .stream()
-                        .filter(s -> this.energyProperties.getGreenSources().contains(s.fuel()))
+                        .filter(y -> this.energyProperties.isGreenSource(y.fuel()))
                         .mapToDouble(FuelShare::perc)
-                        .findFirst()
-                        .orElse(0.0))
+                        .sum())
                 .average()
                 .orElse(0.0);
     }

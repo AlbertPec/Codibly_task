@@ -1,8 +1,9 @@
 package apec.task.dto;
 
+import apec.task.dto.carbon_intensity.FuelShare;
+
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 public record DailyEnergyMixDto(
         LocalDate date,

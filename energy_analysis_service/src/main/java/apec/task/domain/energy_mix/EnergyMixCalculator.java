@@ -1,7 +1,7 @@
 package apec.task.domain.energy_mix;
 
-import apec.task.dto.FuelShare;
-import apec.task.dto.GenerationDataEntry;
+import apec.task.dto.carbon_intensity.FuelShare;
+import apec.task.dto.carbon_intensity.GenerationDataEntry;
 
 import java.util.List;
 

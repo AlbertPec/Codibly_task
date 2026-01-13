@@ -24,8 +24,8 @@ public class EnergyController {
     }
 
     @GetMapping("/optimal-charging-window")
-    public ResponseEntity<ChargingWindowResponseDto> chargingWindow(@RequestParam Integer windowLength) {
-        ChargingWindowResponseDto chargingWindow = service.getChargingWindow(windowLength);
+    public ResponseEntity<ChargingWindowResponseDto> chargingWindow(@RequestParam Integer windowHours) {
+        ChargingWindowResponseDto chargingWindow = service.getChargingWindow(windowHours);
         return ResponseEntity.ok(chargingWindow);
     }
 

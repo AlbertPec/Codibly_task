@@ -1,4 +1,4 @@
-package apec.task.dto;
+package apec.task.dto.carbon_intensity;
 
 public record FuelShare(
         String fuel,

@@ -1,4 +1,4 @@
-package apec.task.dto;
+package apec.task.dto.carbon_intensity;
 
 import java.time.LocalDateTime;
 import java.util.List;

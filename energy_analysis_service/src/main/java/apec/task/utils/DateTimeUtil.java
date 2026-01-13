@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 public final class DateTimeUtil {
 
     private static final DateTimeFormatter ISO_UTC_FORMAT =
-            DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm'Z'");
 
     private DateTimeUtil() {
     }

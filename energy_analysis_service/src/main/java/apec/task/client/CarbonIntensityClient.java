@@ -1,6 +1,6 @@
 package apec.task.client;
 
-import apec.task.dto.GenerationResponse;
+import apec.task.dto.carbon_intensity.GenerationResponse;
 import apec.task.utils.DateTimeUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

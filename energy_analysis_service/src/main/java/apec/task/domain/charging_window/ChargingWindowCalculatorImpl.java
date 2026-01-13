@@ -1,14 +1,11 @@
 package apec.task.domain.charging_window;
 
-import apec.task.dto.ChargingWindowResponseDto;
-import apec.task.dto.FuelShare;
-import apec.task.dto.GenerationDataEntry;
+import apec.task.dto.carbon_intensity.FuelShare;
+import apec.task.dto.carbon_intensity.GenerationDataEntry;
 import apec.task.config.EnergyProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -17,36 +14,42 @@ import java.util.stream.IntStream;
 public class ChargingWindowCalculatorImpl implements ChargingWindowCalculator {
 
     private final EnergyProperties energyProperties;
+    @Override
+    public double calculateWindowScore(List<GenerationDataEntry> data, int start, int windowSize) {
+        return data.subList(start, start + windowSize)
+                .stream()
+                .mapToDouble(this::getGenerationGreenFuelsShare)
+                .average()
+                .orElseThrow();
+    }
 
     @Override
-    public ChargingWindowResponseDto getChargingWindow(List<GenerationDataEntry> data, int windowHours) {
-        int windowSize = windowHours * 2;
+    public int findBestWindowStartIndex(List<GenerationDataEntry> data, int windowSize) {
+        double curSum = 0;
+        for (int i = 0; i < windowSize; i++) {
+            curSum += getGenerationGreenFuelsShare(data.get(i));
+        }
 
-        record WindowResult(int startIndex, double sum) {}
+        double bestSum = curSum;
+        int bestIndex = 0;
 
-        WindowResult best = IntStream
-                .range(0, data.size() - windowSize + 1)
-                .mapToObj(i -> {
-                    double sum = IntStream.range(0, windowSize)
-                            .mapToDouble(j -> data.get(i + j)
-                                    .generationmix().stream()
-                                    .filter(s -> this.energyProperties.getGreenSources().contains(s.fuel()))
-                                    .mapToDouble(FuelShare::perc)
-                                    .findFirst()
-                                    .orElse(0.0)
-                            ).sum();
-                    return new WindowResult(i, sum);
-                })
-                .max(Comparator.comparingDouble(WindowResult::sum))
-                .orElseThrow();
+        for (int i = 1; i <= data.size() - windowSize; i++) {
+            curSum -= getGenerationGreenFuelsShare(data.get(i-1));
+            curSum += getGenerationGreenFuelsShare(data.get(i + windowSize - 1));
 
-        int bestIndex = best.startIndex();
-        double maxSum = best.sum();
+            if (curSum > bestSum) {
+                bestSum = curSum;
+                bestIndex = i;
+            }
+        }
 
-        LocalDateTime start = data.get(bestIndex).from();
-        LocalDateTime end   = data.get(bestIndex + windowSize - 1).to();
-        double avgPercentage = maxSum / windowSize;
+        return bestIndex;
+    }
 
-        return new ChargingWindowResponseDto(start, end, avgPercentage);
+    private double getGenerationGreenFuelsShare(GenerationDataEntry generation) {
+        return generation.generationmix().stream()
+                .filter(x -> this.energyProperties.isGreenSource(x.fuel()))
+                .mapToDouble(FuelShare::perc)
+                .sum();
     }
 }

@@ -1,17 +1,18 @@
 package apec.task.service;
 
 import apec.task.client.CarbonIntensityClient;
-import apec.task.config.EnergyProperties;
 import apec.task.domain.energy_mix.EnergyMixCalculator;
 import apec.task.dto.*;
 import apec.task.domain.charging_window.ChargingWindowCalculator;
-import apec.task.domain.charging_window.ChargingWindowCalculatorImpl;
+import apec.task.dto.carbon_intensity.GenerationDataEntry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,25 +24,47 @@ public class EnergyServiceImpl implements EnergyService{
 
     public EnergyMixResponseDto getEnergyMix(){
         LocalDate today = LocalDate.now();
-        List<GenerationDataEntry> data;
+        LocalDateTime startDate = today.atStartOfDay();
+        LocalDateTime endDate = today.atStartOfDay().plusDays(3);
 
-        data = client.getGeneration(today.atStartOfDay(), today.atStartOfDay().plusHours(24)).data();
-        DailyEnergyMixDto todayEnergy = new DailyEnergyMixDto(today, energyMixCalculator.calculateAverageFuelsShare(data), energyMixCalculator.calculateAverageDailyGreenShare(data));
+        List<GenerationDataEntry> data = client.getGeneration(startDate, endDate).data();
 
-        data = client.getGeneration(today.plusDays(1).atStartOfDay(), today.plusDays(1).atStartOfDay().plusHours(24)).data();
-        DailyEnergyMixDto tomorrowEnergy = new DailyEnergyMixDto(today.plusDays(1), energyMixCalculator.calculateAverageFuelsShare(data), energyMixCalculator.calculateAverageDailyGreenShare(data));
+        Map<LocalDate, List<GenerationDataEntry>> dataByDay = data.stream()
+                .collect(Collectors.groupingBy(e -> e.from().toLocalDate()));
 
-        data = client.getGeneration(today.plusDays(2).atStartOfDay(), today.plusDays(2).atStartOfDay().plusHours(24)).data();
-
-        DailyEnergyMixDto afterTomorrowEnergy = new DailyEnergyMixDto(today.plusDays(2), energyMixCalculator.calculateAverageFuelsShare(data), energyMixCalculator.calculateAverageDailyGreenShare(data));
+        DailyEnergyMixDto todayEnergy = this.buildDailyEnergyMixDto(today, dataByDay);
+        DailyEnergyMixDto tomorrowEnergy = this.buildDailyEnergyMixDto(today.plusDays(1), dataByDay);
+        DailyEnergyMixDto afterTomorrowEnergy = this.buildDailyEnergyMixDto(today.plusDays(2), dataByDay);
 
         return new EnergyMixResponseDto(todayEnergy, tomorrowEnergy, afterTomorrowEnergy);
     }
 
-    public ChargingWindowResponseDto getChargingWindow(int chargeWindowLength){
-        List<GenerationDataEntry> data = client.getGeneration(LocalDateTime.now(), LocalDateTime.now().plusHours(48)).data();
+    private DailyEnergyMixDto buildDailyEnergyMixDto(LocalDate day,Map<LocalDate, List<GenerationDataEntry>> dataByDay) {
 
-        return this.chargingWindowCalculator.getChargingWindow(data, chargeWindowLength);
+        List<GenerationDataEntry> dayData = dataByDay.getOrDefault(day, List.of());
+
+        return new DailyEnergyMixDto(
+                day,
+                energyMixCalculator.calculateAverageFuelsShare(dayData),
+                energyMixCalculator.calculateAverageDailyGreenShare(dayData)
+        );
+    }
+
+    public ChargingWindowResponseDto getChargingWindow(int chargeHours){
+        int chargeWindowLength = chargeHours * 2;
+        List<GenerationDataEntry> data = this.client.getGeneration(
+                LocalDateTime.now(),
+                LocalDateTime.now().plusHours(48)
+        ).data();
+
+        int windowStartIdx = this.chargingWindowCalculator.findBestWindowStartIndex(data, chargeWindowLength);
+        double avgGreenEnergy = this.chargingWindowCalculator.calculateWindowScore(data,windowStartIdx,chargeWindowLength);
+
+        return new ChargingWindowResponseDto(
+                data.get(windowStartIdx).from(),
+                data.get(windowStartIdx + chargeWindowLength - 1).to(),
+                avgGreenEnergy
+        );
     }
 
 }

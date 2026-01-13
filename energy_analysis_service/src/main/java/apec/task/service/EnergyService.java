@@ -7,5 +7,5 @@ public interface EnergyService {
 
     EnergyMixResponseDto getEnergyMix();
 
-    ChargingWindowResponseDto getChargingWindow(int windowLength);
+    ChargingWindowResponseDto getChargingWindow(int chargeHours);
 }

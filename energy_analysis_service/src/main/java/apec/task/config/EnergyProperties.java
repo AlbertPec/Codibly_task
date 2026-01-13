@@ -13,4 +13,8 @@ import java.util.Set;
 @Setter
 public class EnergyProperties {
     private Set<String> greenSources;
+
+    public boolean isGreenSource(String fuel){
+        return this.greenSources.contains(fuel);
+    }
 }
