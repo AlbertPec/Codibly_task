@@ -5,6 +5,7 @@ import apec.task.domain.energy_mix.EnergyMixCalculator;
 import apec.task.dto.*;
 import apec.task.domain.charging_window.ChargingWindowCalculator;
 import apec.task.dto.carbon_intensity.GenerationDataEntry;
+import apec.task.exceptions.InvalidWindowSizeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +52,10 @@ public class EnergyServiceImpl implements EnergyService{
     }
 
     public ChargingWindowResponseDto getChargingWindow(int chargeHours){
+        if (chargeHours < 0 || chargeHours > 6){
+            throw new InvalidWindowSizeException(chargeHours);
+        }
+
         int chargeWindowLength = chargeHours * 2;
         List<GenerationDataEntry> data = this.client.getGeneration(
                 LocalDateTime.now(),
