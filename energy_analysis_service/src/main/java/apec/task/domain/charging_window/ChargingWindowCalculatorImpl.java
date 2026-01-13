@@ -34,8 +34,9 @@ public class ChargingWindowCalculatorImpl implements ChargingWindowCalculator {
         int bestIndex = 0;
 
         for (int i = 1; i <= data.size() - windowSize; i++) {
-            curSum -= getGenerationGreenFuelsShare(data.get(i-1));
-            curSum += getGenerationGreenFuelsShare(data.get(i + windowSize - 1));
+            // Moving the window
+            curSum -= getGenerationGreenFuelsShare(data.get(i-1)); // removing last item from the window
+            curSum += getGenerationGreenFuelsShare(data.get(i + windowSize - 1)); // adding new one to check next window
 
             if (curSum > bestSum) {
                 bestSum = curSum;
