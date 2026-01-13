@@ -1,8 +1,22 @@
+FROM eclipse-temurin:17-jdk AS build
+
+WORKDIR /app
+
+COPY . .
+
+RUN chmod +x gradlew
+
+RUN ./gradlew dependencies --no-daemon
+
+RUN ./gradlew clean build -x test --no-daemon
+
 FROM eclipse-temurin:17-jre
 
-ARG JAR_FILE=build/libs/*.jar
-COPY ${JAR_FILE} app.jar
+WORKDIR /app
 
+COPY --from=build /app/build/libs/*.jar app.jar
+
+ENV PORT=8080
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
