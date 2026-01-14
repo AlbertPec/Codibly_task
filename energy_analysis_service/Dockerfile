@@ -1,22 +1,8 @@
-FROM eclipse-temurin:17-jdk AS build
-
-WORKDIR /app
-
+FROM eclipse-temurin:17-jdk AS builder
+WORKDIR /workspace
 COPY . .
-
-RUN chmod +x gradlew
-
-RUN ./gradlew dependencies --no-daemon
-
-RUN ./gradlew clean build -x test --no-daemon
+RUN ./gradlew build
 
 FROM eclipse-temurin:17-jre
-
-WORKDIR /app
-
-COPY --from=build /app/build/libs/*.jar app.jar
-
-ENV PORT=8080
-EXPOSE 8080
-
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+COPY --from=builder /workspace/build/libs/energy_analysis_service-0.0.1-SNAPSHOT.jar /app/app.jar
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
