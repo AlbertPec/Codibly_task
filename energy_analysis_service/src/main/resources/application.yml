@@ -5,10 +5,6 @@ carbon-intensity:
   api:
     base-url: https://api.carbonintensity.org.uk
 
-cors:
-  allowed-origins:
-    - "https://codibly-task-front.onrender.com"
-    - "http://localhost:3000"
 
 energy:
   green-sources:
